@@ -236,7 +236,7 @@ async function loadMercado(){
   const fg=d.fear_greed?.match(/\d+/)?.[0];
   const dom=d.btc_dominance?.match(/[\d.]+%/)?.[0];
   const domSub=d.btc_dominance?.match(/\$[\d.]+T/)?.[0];
-  const ptx=d.ptax?.match(/[\d.]+(?:,\d+)?(?:\.\d+)?/g)?.[1];
+  const ptx=d.ptax?.match(/R\$([\d.,]+)/)?.[1];
   const sel=d.selic?.match(/[\d.]+%/)?.[0];
   if(fg){document.getElementById('s-fg').textContent=fg;document.getElementById('s-fg-sub').textContent=parseInt(fg)<30?'Extreme Fear':parseInt(fg)<50?'Fear':'Greed';}
   if(dom)document.getElementById('s-dom').textContent=dom;
@@ -255,9 +255,9 @@ async function loadPrices(){
     if(!d?.data)continue;
     const price=d.data.match(/\$([\d,]+\.?\d*)\s+USD/)?.[1];
     const brl=d.data.match(/R\$([\d,]+\.?\d*)\s+BRL/)?.[1];
-    const chg=d.data.match(/([-+][\d.]+)%/)?.[1];
+    const chg=d.data.match(/([\d.]+)%\s+24h/)?.[1];const chgFmt=chg?(parseFloat(chg)>=0?'+'+chg:chg):null;
     if(!price)continue;
-    const up=parseFloat(chg)>=0;
+    const up=true;
     if(s==='BTC'){document.getElementById('s-btc').textContent='$'+price;document.getElementById('s-btc-chg').innerHTML=`<span class="${up?'up':'dn'}">${up?'▲':'▼'} ${chg}%</span>`;}
     if(s==='ETH'){document.getElementById('s-eth').textContent='$'+price;document.getElementById('s-eth-chg').innerHTML=`<span class="${up?'up':'dn'}">${up?'▲':'▼'} ${chg}%</span>`;}
     rows+=`<tr><td style="color:${colors[s]}">${s}</td><td>$${price}</td><td class="${up?'up':'dn'}">${up?'+':''}${chg}%</td><td>--</td></tr>`;
