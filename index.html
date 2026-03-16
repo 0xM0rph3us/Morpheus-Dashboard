@@ -248,7 +248,7 @@ async function loadPrices(){
   const symbols=['BTC','ETH','SOL','BNB','XRP','ADA'];
   const colors={'BTC':'#FFB000','ETH':'#4DA6FF','SOL':'#FF6B00','BNB':'#F0B90B','XRP':'#4DA6FF','ADA':'#9945FF'};
   let rows='';
-  document.getElementById('live-status').textContent='CARREGANDO...';
+  document.getElementById('live-status').textContent='CARREGANDO...';const tkrData=[];
   for(const s of symbols){
     const d=await apiFetch('/preco/'+s);
     if(!d?.data)continue;
@@ -259,7 +259,9 @@ async function loadPrices(){
     const up=true;
     if(s==='BTC'){document.getElementById('s-btc').textContent='$'+price;document.getElementById('s-btc-chg').innerHTML=`<span class="${up?'up':'dn'}">${up?'▲':'▼'} ${chg}%</span>`;}
     if(s==='ETH'){document.getElementById('s-eth').textContent='$'+price;document.getElementById('s-eth-chg').innerHTML=`<span class="${up?'up':'dn'}">${up?'▲':'▼'} ${chg}%</span>`;}
-    rows+=`<tr><td style="color:${colors[s]}">${s}</td><td>$${price}</td><td class="${up?'up':'dn'}">${up?'+':''}${chg}%</td><td>--</td></tr>`;
+    const chgVal=chgFmt||chg||'0';
+    rows+=`<tr><td style="color:${colors[s]}">${s}</td><td>$${price}</td><td class="${up?'up':'dn'}">${chgVal}%</td><td>--</td></tr>`;
+    tkrData.push({s,price,chg:chgVal,col:colors[s]||'#DDD',up});
   }
   document.getElementById('prices-list').innerHTML=`<table><tr><th>SYM</th><th>PRICE</th><th>24H</th><th>VOL</th></tr>${rows}</table>`;
   document.getElementById('live-status').textContent='LIVE';
