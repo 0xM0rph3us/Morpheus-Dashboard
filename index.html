@@ -263,6 +263,8 @@ async function loadPrices(){
   }
   document.getElementById('prices-list').innerHTML=`<table><tr><th>SYM</th><th>PRICE</th><th>24H</th><th>VOL</th></tr>${rows}</table>`;
   document.getElementById('live-status').textContent='LIVE';
+  const all2=[...tkrData,...tkrData,...tkrData,...tkrData];
+  if(all2.length)document.getElementById('tkr-in').innerHTML=all2.map(p=>'<span class="ti"><span style="color:'+p.col+';font-weight:700">'+p.s+'</span> <span style="color:#DDD">$'+p.price+'</span> <span style="color:'+(p.up?'#00D060':'#FF4444')+'">'+p.chg+'%</span></span>').join('');
 
   // Ticker com dados reais
   const tkrItems=document.querySelectorAll('.ti');
@@ -312,35 +314,8 @@ function scanSec(){
   });
 }
 
-loadMercado();
-loadPrices();
-setInterval(loadMercado,5*60*1000);
-setInterval(loadPrices,2*60*1000);
+loadMercado();setInterval(loadMercado,5*60*1000);loadPrices().then(()=>setInterval(loadPrices,2*60*1000));
 </script>
 
-<script>
-// Fix ticker real
-const _origLoad=loadPrices;
-async function loadPrices(){
-  await _origLoad();
-  const rows=document.querySelectorAll('#prices-list tr');
-  const data=[];
-  const cols={'BTC':'#FFB000','ETH':'#4DA6FF','SOL':'#FF6B00','BNB':'#F0B90B','XRP':'#4DA6FF','ADA':'#9945FF'};
-  rows.forEach(r=>{
-    const tds=r.querySelectorAll('td');
-    if(tds.length>=3){
-      const s=tds[0].textContent.trim();
-      const p=tds[1].textContent.trim();
-      const ch=tds[2].textContent.trim();
-      const up=ch.startsWith('+');
-      data.push({s,p,ch,col:cols[s]||'#DDD',up});
-    }
-  });
-  if(data.length){
-    const all=[...data,...data,...data,...data];
-    document.getElementById('tkr-in').innerHTML=all.map(d=>'<span class="ti"><span style="color:'+d.col+';font-weight:700">'+d.s+'</span> <span style="color:#DDD">'+d.p+'</span> <span style="color:'+(d.up?'#00D060':'#FF4444')+'">'+d.ch+'</span></span>').join('');
-  }
-}
-</script>
 </body>
 </html>
