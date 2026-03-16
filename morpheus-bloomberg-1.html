@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Morpheus Terminal</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0A0A0A;--p1:#111;--p2:#161616;--b:#222;--blue:#4DA6FF;--amber:#FFB000;--green:#00D060;--red:#FF4444;--cyan:#00CCCC;--text:#999;--bright:#DDD}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px}
+
+/* HEADER */
+#hdr{background:#000;border-bottom:1px solid #333;padding:6px 12px;display:flex;justify-content:space-between;align-items:center}
+.logo{color:var(--amber);font-family:'IBM Plex Sans',sans-serif;font-weight:700;font-size:14px;letter-spacing:3px}
+.hdr-right{display:flex;gap:16px;align-items:center}
+.hdr-btn{background:none;border:1px solid #333;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 10px;cursor:pointer;letter-spacing:1px;transition:all .15s}
+.hdr-btn:hover{border-color:#555;color:var(--bright)}
+.hdr-btn.active{background:var(--amber);color:#000;border-color:var(--amber)}
+#clock{color:var(--cyan);font-size:11px}
+#admin-btn{background:none;border:none;color:#333;font-size:14px;cursor:pointer;padding:2px 6px;transition:color .2s}
+#admin-btn:hover{color:#555}
+
+/* TICKER */
+#tkr{background:#000;border-bottom:1px solid #333;height:22px;overflow:hidden;display:flex;align-items:center}
+#tkr-in{display:flex;white-space:nowrap;animation:scrl 45s linear infinite}
+.ti{margin-right:32px;font-size:11px}
+
+/* LAYOUT */
+#dashboard-layout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#222}
+#dashboard-layout.with-sidebar{grid-template-columns:1fr 1fr 1fr 220px}
+
+/* CELLS */
+.cell{background:var(--bg);padding:8px}
+.cell-hdr{color:var(--amber);font-size:10px;letter-spacing:2px;border-bottom:1px solid #1A1A1A;padding-bottom:4px;margin-bottom:8px;display:flex;justify-content:space-between}
+
+/* STATS */
+#stats{background:#000;border-bottom:1px solid #333;display:grid;grid-template-columns:repeat(6,1fr);gap:1px}
+.s{background:var(--bg);padding:8px 10px;border-right:1px solid #1A1A1A}
+.sl{font-size:9px;letter-spacing:1px;color:#555;text-transform:uppercase}
+.sv{font-size:18px;font-weight:700;font-family:'IBM Plex Sans',monospace;margin:2px 0}
+.ss{font-size:9px;color:#555}
+
+/* SIDEBAR */
+#sidebar{background:var(--p1);border-left:1px solid #333;display:none}
+#sidebar.visible{display:block}
+.sb-section{border-bottom:1px solid #1A1A1A;padding:8px}
+.sb-title{color:var(--cyan);font-size:9px;letter-spacing:2px;margin-bottom:6px}
+.sb-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #111;font-size:10px}
+.sb-row:last-child{border:none}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{color:#555;font-size:9px;letter-spacing:1px;text-align:left;padding:3px 4px;border-bottom:1px solid #1A1A1A}
+td{padding:5px 4px;border-bottom:1px solid #111;color:var(--bright)}
+tr:hover td{background:#111}
+.up{color:var(--green)} .dn{color:var(--red)}
+.badge-out{background:#FF444415;color:var(--red);font-size:9px;padding:1px 5px;border-radius:2px}
+.badge-in{background:#00D06015;color:var(--green);font-size:9px;padding:1px 5px;border-radius:2px}
+
+/* FORMS */
+.f-label{font-size:9px;color:#555;letter-spacing:1px;margin-bottom:4px;display:block;text-transform:uppercase}
+.bb-input{width:100%;background:#000;border:none;border-bottom:1px solid #333;color:var(--bright);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 0;outline:none;margin-bottom:10px;transition:border-color .15s}
+.bb-input:focus{border-bottom-color:var(--amber)}
+.bb-input::placeholder{color:#333}
+.bb-select{width:100%;background:#000;border:none;border-bottom:1px solid #333;color:var(--bright);font-family:'IBM Plex Mono',monospace;font-size:11px;padding:5px 0;outline:none;margin-bottom:10px}
+.bb-btn{background:var(--amber);color:#000;border:none;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:6px 16px;cursor:pointer;letter-spacing:2px;transition:opacity .15s}
+.bb-btn:hover{opacity:.85}
+.bb-btn-green{background:var(--cyan);color:#000}
+.result-box{margin-top:10px;background:#000;border-left:2px solid var(--amber);padding:8px;font-size:10px;line-height:1.8;color:var(--bright);display:none;white-space:pre-wrap}
+.warn{margin-top:8px;font-size:9px;color:#555;border-left:1px solid #333;padding-left:8px}
+
+/* PORT */
+.pb{margin-bottom:10px}
+.pb-top{display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px}
+.pb-track{background:#1A1A1A;height:3px}
+.pb-fill{height:3px}
+.total-row{margin-top:12px;padding-top:8px;border-top:1px solid #222;display:flex;justify-content:space-between;font-size:11px}
+
+/* MODAL SENHA */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;display:none;align-items:center;justify-content:center}
+#modal.open{display:flex}
+.modal-box{background:#111;border:1px solid #333;padding:24px;width:280px}
+.modal-title{color:var(--amber);font-size:11px;letter-spacing:2px;margin-bottom:16px}
+.modal-input{width:100%;background:#000;border:none;border-bottom:1px solid #333;color:var(--bright);font-family:'IBM Plex Mono',monospace;font-size:13px;padding:6px 0;outline:none;margin-bottom:14px}
+.modal-input::placeholder{color:#333}
+.modal-err{color:var(--red);font-size:10px;margin-bottom:10px;display:none}
+.modal-btns{display:flex;gap:8px}
+
+/* TABS */
+.tab{display:none}.tab.active{display:block}
+
+@keyframes scrl{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media(max-width:900px){#dashboard-layout,#dashboard-layout.with-sidebar{grid-template-columns:1fr}#stats{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- MODAL SENHA -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-title">⬛ ADMIN ACCESS</div>
+    <input class="modal-input" id="pwd-input" type="password" placeholder="senha" onkeydown="if(event.key==='Enter')checkPwd()"/>
+    <div class="modal-err" id="pwd-err">Senha incorreta.</div>
+    <div class="modal-btns">
+      <button class="bb-btn" onclick="checkPwd()">ENTRAR</button>
+      <button class="bb-btn" style="background:#222;color:var(--text)" onclick="closeModal()">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="hdr">
+  <span class="logo">⬛ MORPHEUS TERMINAL</span>
+  <div class="hdr-right">
+    <button class="hdr-btn active" onclick="st('dashboard',this)">MARKET</button>
+    <button class="hdr-btn" onclick="st('portfolio',this)">PORTFOLIO</button>
+    <button class="hdr-btn" onclick="st('ir',this)">IR/TAX</button>
+    <button class="hdr-btn" onclick="st('osint',this)">SECURITY INTEL</button>
+    <span id="clock">--:--:--</span>
+    <button id="admin-btn" onclick="openModal()" title="Admin">⚙</button>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div id="tkr"><div id="tkr-in"></div></div>
+
+<!-- STATS BAR -->
+<div id="stats">
+  <div class="s"><div class="sl">Fear/Greed</div><div class="sv" style="color:#FF4444">23</div><div class="ss">Extreme Fear</div></div>
+  <div class="s"><div class="sl">BTC Dom</div><div class="sv" style="color:#FFB000">57.0%</div><div class="ss">$2.59T Mkt Cap</div></div>
+  <div class="s"><div class="sl">PTAX</div><div class="sv" style="color:#4DA6FF">5.2541</div><div class="ss">BRL/USD</div></div>
+  <div class="s"><div class="sl">Selic</div><div class="sv" style="color:#00CCCC">15.00%</div><div class="ss">a.a. BACEN</div></div>
+  <div class="s"><div class="sl">BTC Price</div><div class="sv" style="color:#FFB000">$73,704</div><div class="ss up">▲ +3.32%</div></div>
+  <div class="s"><div class="sl">ETH Price</div><div class="sv" style="color:#4DA6FF">$3,821</div><div class="ss up">▲ +1.87%</div></div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- TAB DASHBOARD -->
+  <div id="tab-dashboard" class="tab active">
+    <div id="dashboard-layout">
+
+      <!-- LIVE MARKET -->
+      <div class="cell">
+        <div class="cell-hdr"><span>📈 LIVE MARKET</span></div>
+        <table>
+          <tr><th>SYM</th><th>PRICE</th><th>24H</th><th>VOL</th></tr>
+          <tr><td style="color:#FFB000">BTC</td><td>$73,704</td><td class="up">+3.32%</td><td>$42.1B</td></tr>
+          <tr><td style="color:#4DA6FF">ETH</td><td>$3,821</td><td class="up">+1.87%</td><td>$18.4B</td></tr>
+          <tr><td style="color:#FF6B00">SOL</td><td>$182.40</td><td class="dn">-0.94%</td><td>$5.2B</td></tr>
+          <tr><td style="color:#F0B90B">BNB</td><td>$412.30</td><td class="up">+2.11%</td><td>$3.8B</td></tr>
+          <tr><td style="color:#4DA6FF">XRP</td><td>$0.6120</td><td class="up">+4.55%</td><td>$6.1B</td></tr>
+          <tr><td style="color:#9945FF">ADA</td><td>$0.4820</td><td class="dn">-1.22%</td><td>$1.2B</td></tr>
+        </table>
+      </div>
+
+      <!-- WHALE ALERTS -->
+      <div class="cell">
+        <div class="cell-hdr"><span>🐳 WHALE ALERTS</span><span style="color:#00D060">● LIVE</span></div>
+        <table>
+          <tr><th>TIME</th><th>CHAIN</th><th>AMOUNT</th><th>USD</th><th>FLOW</th></tr>
+          <tr><td style="color:#555">03:42</td><td style="color:#FFB000">BTC</td><td>1,240 BTC</td><td>$91.4M</td><td><span class="badge-out">OUT</span></td></tr>
+          <tr><td style="color:#555">03:38</td><td style="color:#4DA6FF">ETH</td><td>8,200 ETH</td><td>$31.3M</td><td><span class="badge-in">IN</span></td></tr>
+          <tr><td style="color:#555">03:21</td><td style="color:#9945FF">SOL</td><td>420K SOL</td><td>$76.6M</td><td><span class="badge-out">OUT</span></td></tr>
+          <tr><td style="color:#555">02:58</td><td style="color:#FFB000">BTC</td><td>580 BTC</td><td>$42.7M</td><td><span class="badge-in">IN</span></td></tr>
+          <tr><td style="color:#555">02:44</td><td style="color:#4DA6FF">ETH</td><td>12K ETH</td><td>$45.8M</td><td><span class="badge-out">OUT</span></td></tr>
+        </table>
+      </div>
+
+      <!-- ALPHA RADAR -->
+      <div class="cell">
+        <div class="cell-hdr"><span>🔥 ALPHA RADAR</span><span style="color:#FF6B00">TRENDING</span></div>
+        <table>
+          <tr><th>TOKEN</th><th>24H</th><th>VOL</th><th>SOURCE</th></tr>
+          <tr><td style="color:#00D060">HYPE 🔥</td><td class="up">+142%</td><td>$2.1B</td><td style="color:#555">Bitquery</td></tr>
+          <tr><td style="color:#00D060">WIF 🔥</td><td class="up">+38%</td><td>$890M</td><td style="color:#555">CryptoPanic</td></tr>
+          <tr><td>JUP</td><td class="up">+21%</td><td>$440M</td><td style="color:#555">CMC</td></tr>
+          <tr><td>PEPE</td><td class="up">+17%</td><td>$1.2B</td><td style="color:#555">CoinGecko</td></tr>
+          <tr><td>ONDO</td><td class="up">+12%</td><td>$320M</td><td style="color:#555">Reddit</td></tr>
+        </table>
+      </div>
+
+      <!-- SIDEBAR ADMIN (oculta por padrão) -->
+      <div id="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">SYSTEM STATUS</div>
+          <div class="sb-row"><span>Morpheus Bot</span><span style="color:#00D060">● ONLINE</span></div>
+          <div class="sb-row"><span>API REST</span><span style="color:#00D060">● ONLINE</span></div>
+          <div class="sb-row"><span>Groq LLM</span><span style="color:#00D060">● ACTIVE</span></div>
+          <div class="sb-row"><span>FAISS Mem</span><span style="color:#00D060">● LOADED</span></div>
+          <div class="sb-row"><span>Gemini</span><span style="color:#FF4444">● QUOTA</span></div>
+        </div>
+        <div class="sb-section">
+          <div class="sb-title">ENGINES</div>
+          <div class="sb-row"><span>Whale Radar</span><span style="color:#00D060">60s</span></div>
+          <div class="sb-row"><span>Alpha Radar</span><span style="color:#00D060">5min</span></div>
+          <div class="sb-row"><span>Risk Radar</span><span style="color:#00D060">5min</span></div>
+          <div class="sb-row"><span>Security Intel</span><span style="color:#00D060">5min</span></div>
+          <div class="sb-row"><span>Backup</span><span style="color:#4DA6FF">03:00</span></div>
+        </div>
+        <div class="sb-section">
+          <div class="sb-title">APIs ATIVAS</div>
+          <div class="sb-row"><span>CoinGecko</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>Etherscan</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>GoPlus</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>BACEN</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>NewsData</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>Helius</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>Mobula</span><span style="color:#00D060">✓</span></div>
+          <div class="sb-row"><span>Alchemy</span><span style="color:#00D060">✓</span></div>
+        </div>
+        <div class="sb-section">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="color:#555;font-size:9px">SESSION</span>
+            <button onclick="logout()" style="background:none;border:1px solid #333;color:#555;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 8px;cursor:pointer">SAIR</button>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:#00D060">0xTon — Architect</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TAB PORTFOLIO -->
+  <div id="tab-portfolio" class="tab" style="padding:12px;max-width:580px">
+    <div class="cell" style="border:1px solid #222">
+      <div class="cell-hdr"><span>PORTFOLIO BREAKDOWN</span></div>
+      <div class="pb"><div class="pb-top"><span style="color:#FFB000">BTC <span style="color:#555">0.42</span></span><span style="color:#DDD">R$ 165,050 <span style="color:#555">52%</span></span></div><div class="pb-track"><div class="pb-fill" style="width:52%;background:#FFB000"></div></div></div>
+      <div class="pb"><div class="pb-top"><span style="color:#4DA6FF">ETH <span style="color:#555">3.80</span></span><span style="color:#DDD">R$ 77,890 <span style="color:#555">25%</span></span></div><div class="pb-track"><div class="pb-fill" style="width:25%;background:#4DA6FF"></div></div></div>
+      <div class="pb"><div class="pb-top"><span style="color:#FF6B00">SOL <span style="color:#555">45.0</span></span><span style="color:#DDD">R$ 43,956 <span style="color:#555">14%</span></span></div><div class="pb-track"><div class="pb-fill" style="width:14%;background:#FF6B00"></div></div></div>
+      <div class="pb"><div class="pb-top"><span style="color:#F0B90B">BNB <span style="color:#555">2.10</span></span><span style="color:#DDD">R$ 36,758 <span style="color:#555">9%</span></span></div><div class="pb-track"><div class="pb-fill" style="width:9%;background:#F0B90B"></div></div></div>
+      <div class="total-row"><span>TOTAL</span><span style="color:#00D060;font-weight:700">R$ 323,654</span></div>
+    </div>
+  </div>
+
+  <!-- TAB IR -->
+  <div id="tab-ir" class="tab" style="padding:12px;max-width:480px">
+    <div class="cell" style="border:1px solid #222">
+      <div class="cell-hdr"><span>IR/TAX CALCULATOR</span></div>
+
+      <label class="f-label">Quantidade vendida</label>
+      <input class="bb-input" id="ir-qtd" placeholder="0.5" type="number" step="any"/>
+
+      <label class="f-label">Preço médio de compra (R$)</label>
+      <input class="bb-input" id="ir-compra" placeholder="65000" type="number" step="any"/>
+
+      <label class="f-label">Preço de venda (R$)</label>
+      <input class="bb-input" id="ir-venda" placeholder="92500" type="number" step="any"/>
+
+      <label class="f-label">Mês de referência da DARF</label>
+      <select class="bb-select" id="ir-mes">
+        <option value="">— selecione o mês —</option>
+      </select>
+
+      <button class="bb-btn" onclick="calcIR()">CALCULATE →</button>
+      <div class="result-box" id="ir-res"></div>
+      <div class="warn">⚠ DARF código 4600 · Consulte contador habilitado · Vence último dia útil do mês seguinte</div>
+    </div>
+  </div>
+
+  <!-- TAB SECURITY INTEL -->
+  <div id="tab-osint" class="tab" style="padding:12px;max-width:580px">
+    <div class="cell" style="border:1px solid #222">
+      <div class="cell-hdr"><span>🔍 SECURITY INTEL</span></div>
+
+      <label class="f-label">Contract Address</label>
+      <input class="bb-input" id="sc-addr" placeholder="0x..."/>
+
+      <label class="f-label">Chain</label>
+      <select class="bb-select" id="sc-chain">
+        <option>eth</option><option>bsc</option><option>base</option><option>arb</option><option>sol</option>
+      </select>
+
+      <button class="bb-btn bb-btn-green" onclick="scanSec()">SCAN →</button>
+      <div class="result-box" id="sc-res" style="border-color:var(--cyan)"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── SENHA ADMIN ─────────────────────────────────────────
+const ADMIN_HASH = '63640264849a87c90356129d99ea165e37aa5fabc1fea46906df1a7ca50db492'; // "password" — MUDE AQUI
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  setTimeout(()=>document.getElementById('pwd-input').focus(), 100);
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.getElementById('pwd-input').value='';
+  document.getElementById('pwd-err').style.display='none';
+}
+async function checkPwd() {
+  const val = document.getElementById('pwd-input').value;
+  const hash = await sha256(val);
+  if (hash === ADMIN_HASH) {
+    closeModal();
+    showSidebar();
+  } else {
+    document.getElementById('pwd-err').style.display='block';
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+  }
+}
+function showSidebar() {
+  document.getElementById('sidebar').classList.add('visible');
+  document.getElementById('dashboard-layout').classList.add('with-sidebar');
+  sessionStorage.setItem('morpheus_admin','1');
+}
+function logout() {
+  document.getElementById('sidebar').classList.remove('visible');
+  document.getElementById('dashboard-layout').classList.remove('with-sidebar');
+  sessionStorage.removeItem('morpheus_admin');
+}
+
+// Restaura sessão admin se já estava logado
+if (sessionStorage.getItem('morpheus_admin')) showSidebar();
+
+// ── RELÓGIO ─────────────────────────────────────────────
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('pt-BR'),1000);
+
+// ── TABS ────────────────────────────────────────────────
+function st(n,b) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.hdr-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('tab-'+n).classList.add('active');
+  b.classList.add('active');
+}
+
+// ── TICKER ──────────────────────────────────────────────
+const P=[{s:'BTC',p:'73,704',c:'+3.32',col:'#FFB000'},{s:'ETH',p:'3,821',c:'+1.87',col:'#4DA6FF'},{s:'SOL',p:'182.40',c:'-0.94',col:'#FF6B00'},{s:'BNB',p:'412.30',c:'+2.11',col:'#F0B90B'},{s:'XRP',p:'0.6120',c:'+4.55',col:'#4DA6FF'}];
+const ti=[...P,...P,...P,...P];
+document.getElementById('tkr-in').innerHTML=ti.map(p=>`<span class="ti"><span style="color:${p.col};font-weight:700">${p.s}</span> <span style="color:#DDD">$${p.p}</span> <span style="color:${parseFloat(p.c)>=0?'#00D060':'#FF4444'}">${p.c}%</span></span>`).join('');
+
+// ── SELECT MESES IR ──────────────────────────────────────
+(function(){
+  const sel = document.getElementById('ir-mes');
+  const now = new Date();
+  for(let i=0; i<24; i++){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const val = `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = val;
+    if(i===1) opt.selected = true; // mês anterior como padrão
+    sel.appendChild(opt);
+  }
+})();
+
+// ── IR CALC ─────────────────────────────────────────────
+function calcIR(){
+  const q=parseFloat(document.getElementById('ir-qtd').value);
+  const b=parseFloat(document.getElementById('ir-compra').value);
+  const s=parseFloat(document.getElementById('ir-venda').value);
+  const mes=document.getElementById('ir-mes').value;
+  if(!q||!b||!s){alert('Preencha quantidade, compra e venda.');return;}
+  if(!mes){alert('Selecione o mês de referência.');return;}
+  const g=(s-b)*q, ir=g>0?g*.15:0;
+  const fmt=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const el=document.getElementById('ir-res');
+  el.style.display='block';
+  el.textContent=`MORPHEUS IR CALC — ${mes}\n\nQTD VENDIDA:   ${q}\nPRECO COMPRA:  ${fmt(b)}\nPRECO VENDA:   ${fmt(s)}\nTOTAL VENDAS:  ${fmt(s*q)}\nGANHO CAPITAL: ${fmt(g)}\n\nIR DEVIDO:     ${fmt(ir)}\nALIQUOTA:      15.0%\nDARF CODIGO:   4600\nREF. DARF:     ${mes}`;
+}
+
+// ── SECURITY INTEL ───────────────────────────────────────
+function scanSec(){
+  const c=document.getElementById('sc-addr').value.trim();
+  const ch=document.getElementById('sc-chain').value;
+  if(!c){alert('Cole o endereço do contrato.');return;}
+  const el=document.getElementById('sc-res');
+  el.style.display='block';
+  el.textContent=`SCAN: ${c}\nCHAIN: ${ch.toUpperCase()}\n\nConecte o servidor Morpheus para análise completa.\nGoPlus + Mobula + Honeypot.is`;
+}
+</script>
+</body>
+</html>
